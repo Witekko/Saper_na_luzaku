@@ -1,0 +1,105 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+
+body {
+    font-family: 'Roboto', sans-serif;
+    background-color: #fafafa;
+    color: #333;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+}
+
+h1 {
+    font-size: 3rem;
+    font-weight: 700;
+    color: #444;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 10px;
+}
+
+#game-status {
+    font-size: 1.2rem;
+    font-weight: 400;
+    color: #666;
+    height: 1.5em;
+    margin-bottom: 20px;
+}
+
+#game-board {
+    display: grid;
+    grid-template-columns: repeat(10, 40px);
+    grid-template-rows: repeat(10, 40px);
+    gap: 4px;
+    background-color: #bdbdbd;
+    border: 5px solid #bdbdbd;
+    border-radius: 8px;
+    padding: 10px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1), 0 6px 20px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+    
+}
+
+.cell {
+    width: 40px;
+    height: 40px;
+    background-color: #e0e0e0;
+    border: 1px solid #bdbdbd;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5em;
+    font-weight: 700;
+    color: transparent;
+    transition: all 0.2s ease-in-out;
+}
+
+.cell:hover {
+    background-color: #eeeeee;
+    transform: scale(1.05);
+}
+
+.revealed {
+    background-color: #fafafa;
+    cursor: default;
+    color: #333;
+    box-shadow: inset 2px 2px 4px rgba(0,0,0,0.1);
+}
+
+.revealed:hover {
+    background-color: #fafafa;
+    transform: none;
+}
+
+.mine {
+    background-color: #e57373;
+    color: white;
+}
+
+.mine.revealed::after {
+    content: '💣';
+    font-size: 1.2em;
+}
+
+.n1 { color: #1976D2; }
+.n2 { color: #388E3C; }
+.n3 { color: #D32F2F; }
+.n4 { color: #7B1FA2; }
+.n5 { color: #FF8F00; }
+.n6 { color: #00897B; }
+.n7 { color: #424242; }
+.n8 { color: #F57C00; }
+
+.flagged {
+    color: #333;
+}
+
+.flagged::after {
+    content: '🚩';
+    font-size: 1.2em;
+}

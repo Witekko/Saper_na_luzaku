@@ -9,8 +9,22 @@
 <body>
     <h1>Saper</h1>
     <h2 id="game-status"></h2>
+    <div id="difficulty-controls">
+        <button id="btn-easy">Łatwy (8x10, 8 min)</button>
+        <button id="btn-medium">Średni (16x20, 40 min)</button>
+        <button id="btn-hard">Ekspert (16x30, 99 min)</button>
+    </div>
+    <div id="game-info">
+        <span>Pozostałe miny: <span id="mines-count">0</span></span> | 
+        <span>Czas: <span id="timer">0</span> s</span>
+    </div>
     <div id="game-board"></div>
     <button id="reset-button">Restart</button>
+    <div id="auth-section">
+        <a href="http://localhost:8000/auth/google/login" class="btn-google">
+            Zaloguj przez Google
+        </a>
+    </div>
     <script src="script.js"></script>
 </body>
 </html>

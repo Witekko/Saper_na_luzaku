@@ -1,5 +1,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
 
+/* =========================================
+   1. BASE STYLES & TYPOGRAPHY
+   ========================================= */
 body {
     font-family: 'Roboto', sans-serif;
     background-color: #fafafa;
@@ -21,6 +24,23 @@ h1 {
     margin-bottom: 10px;
 }
 
+/* =========================================
+   2. UI CONTROLS & PANELS
+   ========================================= */
+#difficulty-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 20px;
+    gap: 10px;
+}
+
+#game-info {
+    margin-bottom: 10px;
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
 #game-status {
     font-size: 1.2rem;
     font-weight: 400;
@@ -29,10 +49,49 @@ h1 {
     margin-bottom: 20px;
 }
 
+button {
+    padding: 8px 12px;
+    font-family: inherit;
+    font-size: 1rem;
+    cursor: pointer;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: #fff;
+    transition: background-color 0.2s;
+}
+
+button:hover {
+    background-color: #e0e0e0;
+}
+
+#reset-button {
+    margin-top: 10px;
+    margin-bottom: 20px;
+    padding: 10px 20px;
+    font-weight: bold;
+}
+
+/* Przycisk Google logowania */
+.btn-google {
+    display: inline-block;
+    padding: 10px 15px;
+    background-color: #4285F4;
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
+    font-weight: bold;
+    transition: background-color 0.2s;
+}
+
+.btn-google:hover {
+    background-color: #3367D6;
+}
+
+/* =========================================
+   3. GAME BOARD
+   ========================================= */
 #game-board {
     display: grid;
-    grid-template-columns: repeat(10, 40px);
-    grid-template-rows: repeat(10, 40px);
     gap: 4px;
     background-color: #bdbdbd;
     border: 5px solid #bdbdbd;
@@ -40,9 +99,11 @@ h1 {
     padding: 10px;
     box-shadow: 0 4px 8px rgba(0,0,0,0.1), 0 6px 20px rgba(0,0,0,0.1);
     margin-bottom: 20px;
-    
 }
 
+/* =========================================
+   4. CELLS BASE
+   ========================================= */
 .cell {
     width: 40px;
     height: 40px;
@@ -64,6 +125,9 @@ h1 {
     transform: scale(1.05);
 }
 
+/* =========================================
+   5. CELL STATES (Revealed, Mine, Flag)
+   ========================================= */
 .revealed {
     background-color: #fafafa;
     cursor: default;
@@ -76,6 +140,15 @@ h1 {
     transform: none;
 }
 
+.flagged {
+    color: #333;
+}
+
+.flagged::after {
+    content: '🚩';
+    font-size: 1.2em;
+}
+
 .mine {
     background-color: #e57373;
     color: white;
@@ -86,6 +159,9 @@ h1 {
     font-size: 1.2em;
 }
 
+/* =========================================
+   6. NEIGHBOR MINE COLORS
+   ========================================= */
 .n1 { color: #1976D2; }
 .n2 { color: #388E3C; }
 .n3 { color: #D32F2F; }
@@ -94,12 +170,3 @@ h1 {
 .n6 { color: #00897B; }
 .n7 { color: #424242; }
 .n8 { color: #F57C00; }
-
-.flagged {
-    color: #333;
-}
-
-.flagged::after {
-    content: '🚩';
-    font-size: 1.2em;
-}

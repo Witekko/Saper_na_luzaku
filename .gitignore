@@ -1,0 +1,13 @@
+# Zmienne środowiskowe i tajne klucze
+.env
+
+# Środowisko wirtualne Pythona
+.venv/
+venv/
+
+# Baza danych SQLite (nie chcemy wrzucać testowych danych użytkowników)
+*.db
+
+# Pliki tymczasowe i cache Pythona
+__pycache__/
+*.pyc

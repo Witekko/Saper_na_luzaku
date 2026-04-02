@@ -1,135 +1,176 @@
 // Plik skryptów dla Saper
 
-
-class Cell {
-    constructor(row, col) {
-        this.row = row;
-        this.col = col;
-        this.isMine = false;
-        this.isRevealed = false;
-        this.isFlagged = false;
-        this.neighborMines = 0;
-    }
-}
 class Game {
-    constructor(rows, cols, minesCount) {
-        this.rows = rows;
-        this.cols = cols;
-        this.minesCount = minesCount;
-        this.board = [];
-        this.gameOver = false;
-        this.isWin=false;
-        this.firstClick = true;
-        this.init();
-    }
-
-    init() {
-        // Logika inicjalizacji gry
-        this.createGrid();
-        this.render();
-    }
-    createGrid (){
+    constructor() {
+        this.seconds = 0;
+        this.timerInterval = null; // Zmiana nazwy, by nie konfliktowała z systemowym setInterval
         
-        for (let r = 0; r < this.rows; r++) {
-        const row = [];
-          // Add the new row to the board
+        // Domyślne ustawienia dla poziomu "Łatwy"
+        this.currentRows = 8;
+        this.currentCols = 10;
+        this.currentMines = 8;
+        this.init(this.currentRows, this.currentCols, this.currentMines);
+    }
 
-            for (let c = 0; c < this.cols; c++) {
-                const cell = new Cell(r, c);
-                row.push(cell);
-            }
-        this.board.push(row);
+    async init(rows = this.currentRows, cols = this.currentCols, mines = this.currentMines) {
+        // Zapamiętujemy aktualnie wybrany poziom do późniejszego restartu
+        this.currentRows = rows;
+        this.currentCols = cols;
+        this.currentMines = mines;
+
+        // Logika inicjalizacji gry
+        try{
+            const response = await fetch(`http://127.0.0.1:8000/new?rows=${rows}&cols=${cols}&mines=${mines}`,{
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'}
+            });
+            const gameState = await response.json();
+            this.seconds = 0;
+            
+            // Zatrzymujemy stary stoper i resetujemy wyświetlacz
+            this.stopTimer();
+            document.getElementById('timer').textContent = this.seconds;
+            document.getElementById('game-board').innerHTML = '';
+
+
+            this.gameId = gameState.game_id;
+            this.render(gameState)
+        } catch(error){
+            console.error("Nie udało się zainicjować gry:", error);
         }
     }
-    revealNeighbors(cell) {
-        const neighbors = [
-            [-1, -1], [-1, 0], [-1, 1],
-            [0, -1],           [0, 1],
-            [1, -1], [1, 0], [1, 1]
-        ];
-        for (const neighbor of neighbors) {
-            const neighborRow = cell.row + neighbor[0];
-            const neighborCol = cell.col + neighbor[1];
-            if (neighborCol >= 0 && neighborCol < this.cols && neighborRow >= 0 && neighborRow < this.rows){
-                const neighborCell = this.board[neighborRow][neighborCol];
-                if (!neighborCell.isRevealed) {
-                    this.handleClick(neighborCell);
-                }
-            }}
-    }
-    
-    handleClick(cell) {
-        if(this.firstClick){
-                    this.createMines(cell);
-                    this.firstClick=false;
-                    this.calculateNeighborMines();
-                }
-        if (cell.isRevealed || this.gameOver || cell.isFlagged) {
-            return;
+
+    startTimer() {
+        // Uruchom stoper tylko wtedy, jeśli jeszcze nie działa
+        if (!this.timerInterval) {
+            // window.setInterval wykonuje podaną funkcję co 1000 milisekund (1 sekundę)
+            this.timerInterval = window.setInterval(() => {
+                this.seconds++;
+                document.getElementById('timer').textContent = this.seconds;
+            }, 1000);
         }
-        cell.isRevealed = true;
-        if (cell.isMine) {
-                this.gameOver = true;
-                console.log("Przegrana!");
-            } 
-        else if (cell.neighborMines === 0){
-            this.revealNeighbors(cell);
-        }
-        this.isWin=this.checkWinCondition()
-        this.render();
     }
-    checkWinCondition(){
-        for (const row of this.board) {
-            for (const cell of row) {
-                if (!cell.isRevealed && !cell.isMine) {
-                    return false;
-                }
-            }
+
+    stopTimer() {
+        // Jeśli stoper działa, zatrzymaj go
+        if (this.timerInterval) {
+            clearInterval(this.timerInterval);
+            this.timerInterval = null;
         }
-        this.gameOver = true;
-        console.log("Wygrana!");
-        return true;
     }
-    render() {
+
+    render(gameState) {
         const gameBoard = document.getElementById('game-board');
-        gameBoard.innerHTML = '';
-        for (const row of this.board) {
-            for (const cell of row) {
-                const cellElement = document.createElement('div');
+
+        // Dynamiczne dopasowanie siatki CSS do rozmiaru planszy przysłanego z serwera
+        gameBoard.style.gridTemplateColumns = `repeat(${gameState.cols}, 40px)`;
+        let flagscount = 0
+
+        if (gameBoard.children.length === 0){
+            for (const row of gameState.grid){
+                for (const cell of row){
+                    const cellElement = document.createElement('div');
                 cellElement.dataset.row = cell.row;
                 cellElement.dataset.col = cell.col;
                 cellElement.classList.add('cell');
-                cellElement.addEventListener('contextmenu', (event) => {
+
+                // Prawy klik (flagowanie)
+                cellElement.addEventListener('contextmenu', async (event) => {
                     event.preventDefault();
-                    if(!cell.isRevealed){
-                        cell.isFlagged = !cell.isFlagged;
-                        this.render();
+                    if (cell.is_revealed || gameState.game_over) return;
+
+                    try {
+                        // Uruchom czas przy pierwszym postawieniu flagi (opcjonalne, ale częste w Saperze)
+                        this.startTimer();
+
+                        const response = await fetch(`http://127.0.0.1:8000/game/${this.gameId}/flag`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ row: cell.row, col: cell.col })
+                        });
+                        if (!response.ok) {
+                            alert("Gra wygasła (zrestartowano serwer). Inicjuję nową planszę!");
+                            this.init();
+                            return;
+                        }
+                        const newGameState = await response.json();
+                        this.render(newGameState);
+                    } catch (error) {
+                        console.error("Błąd podczas flagowania komórki:", error);
                     }
                 });
-                cellElement.addEventListener('click', () => {
-                    this.handleClick(cell);
-                });
 
-                if (cell.isFlagged) {
-                    cellElement.classList.add('flagged');
-                }
+                // Lewy klik (odkrywanie)
+                cellElement.addEventListener('click', async () => {
+                    if (cell.is_revealed || cell.is_flagged || gameState.game_over) return;
 
-                if (cell.isRevealed) {
-                    cellElement.classList.add('revealed');
-                    if (cell.isMine) {
-                        cellElement.classList.add('mine');
-                    } else if (cell.neighborMines > 0) {
-                        cellElement.textContent = cell.neighborMines;
-                        cellElement.classList.add('n' + cell.neighborMines);
+                    try {
+                        // Uruchom czas przy pierwszym kliknięciu
+                        this.startTimer();
+
+                        const response = await fetch(`http://127.0.0.1:8000/game/${this.gameId}/reveal`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ row: cell.row, col: cell.col })
+                        });
+                        if (!response.ok) {
+                            alert("Gra wygasła (zrestartowano serwer). Inicjuję nową planszę!");
+                            this.init();
+                            return;
+                        }
+                        const newGameState = await response.json();
+                        this.render(newGameState);
+                    } catch (error) {
+                        console.error("Błąd podczas odkrywania komórki:", error);
                     }
-                }
+                });
                 
+                // Dodajemy zbudowaną komórkę do planszy w HTML (tylko raz!)
                 gameBoard.appendChild(cellElement);
+                }
+            }   
+        }
+        
+        // FAZA 2: AKTUALIZACJA (wykona się po każdym kliknięciu)
+        for (const row of gameState.grid) {
+            for (const cell of row) {
+                const index = cell.row * gameState.cols + cell.col;
+                const cellElement = gameBoard.children[index];
+
+                cellElement.className = 'cell';
+                cellElement.textContent = '';
+
+                // Ustawianie wyglądu komórki na podstawie danych z serwera
+                if (cell.is_flagged) {
+                    cellElement.classList.add('flagged');
+                    flagscount++;
+                }
+
+                if (cell.is_revealed) {
+                    cellElement.classList.add('revealed');
+                    if (cell.neighbor_mines > 0) {
+                        cellElement.textContent = cell.neighbor_mines;
+                        cellElement.classList.add('n' + cell.neighbor_mines);
+                    }
+                }
+
+                // Jeśli serwer odesłał nam informację o minie (oznacza to koniec gry)
+                if (cell.is_mine) {
+                    cellElement.classList.add('revealed', 'mine');
+                }
             }
         }
+
         const statusElement = document.getElementById('game-status');
-        if (this.gameOver) {
-            if (this.isWin) {
+        if (gameState.game_over) {
+            // Gra się skończyła, zatrzymujemy stoper
+            this.stopTimer();
+
+            // Po przegranej, backend w przyszłości może zwrócić planszę z odkrytymi minami
+            // Na razie po prostu pokazujemy status
+            if (gameState.is_win) {
+                flagscount = gameState.mines;
                 statusElement.textContent = "Congratulations, you Win!";
                 statusElement.style.color = 'green';
             } else {
@@ -139,71 +180,34 @@ class Game {
         } else {
             statusElement.textContent = ""; 
         }
+        const minesLeftElement = document.getElementById('mines-count');
+        minesLeftElement.textContent = gameState.mines - flagscount;
     }
-    createMines(firstcell) { 
-        let minesPlaced = 0;
-        const safezone = [
-            [firstcell.row-1, firstcell.col-1], [firstcell.row-1, firstcell.col], [firstcell.row-1, firstcell.col+1],
-            [firstcell.row, firstcell.col-1],    [firstcell.row, firstcell.col],   [firstcell.row,firstcell.col+1],
-            [firstcell.row+1, firstcell.col-1], [firstcell.row+1, firstcell.col], [firstcell.row+1,firstcell.col+1],
-        ];
-        
-        while (minesPlaced < this.minesCount) {
-            const row = Math.floor(Math.random() * this.rows);
-            const col = Math.floor(Math.random() * this.cols);  
-            const cell = this.board[row][col];
-            
-            if (!cell.isMine){
-                if (!safezone.some(safezone => safezone[0] === row && safezone[1] === col)) {
-                    cell.isMine = true;
-                    minesPlaced++;
-                }
-                
-                
-            }
-        }
 
-    }
-    calculateNeighborMines() {
-        for (let r = 0; r < this.rows; r++) {
-            for (let c = 0; c < this.cols; c++) {
-                const cell = this.board[r][c];
-                if (!cell.isMine) {
-                    let neighborMines = 0;
-                    for (let i = -1; i <= 1; i++) {
-                        for (let j = -1; j <= 1; j++) {
-                            const neighborRow = r + i;
-                            const neighborCol = c + j;
-                            if (neighborRow >= 0 && neighborRow < this.rows && neighborCol >= 0 && neighborCol < this.cols) {
-                                const neighborCell = this.board[neighborRow][neighborCol];  
-                                if (neighborCell.isMine) {
-                                    neighborMines++;
-                                }
-                            }
-                            
-                        }
-                    }
-                cell.neighborMines = neighborMines;
-                }
-                
-            }
-        }
-    }
     reset(){
-        this.board = [];
-        this.gameOver = false;
-        this.isWin=false;
-        this.firstClick = true;
+        // Reset po prostu inicjuje nową grę
         this.init();
     }
 }
 let game;
 document.addEventListener('DOMContentLoaded', () => {
 
-    const rows = 10;
-    const cols = 10;
-    const minesCount = 10;
-    game = new Game(rows, cols, minesCount);
+    // Funkcja pomocnicza do wyciągania wartości konkretnego ciastka z document.cookie
+    function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(';').shift();
+    }
+
+    // Sprawdzamy, czy w ciasteczkach jest nazwa gracza (co oznacza, że wrócił z Google!)
+    const playerName = getCookie("player_name");
+    if (playerName) {
+        const authSection = document.getElementById("auth-section");
+        // Zamieniamy przycisk logowania na tekst powitalny
+        authSection.innerHTML = `<span style="font-weight: bold; color: #4285F4; font-size: 1.2rem;">Witaj, ${decodeURIComponent(playerName)}!</span>`;
+    }
+
+    game = new Game();
     console.log("Utworzono obiekt gry:", game);
     const resetButton = document.getElementById('reset-button');
     resetButton.addEventListener('click', () => {
@@ -213,6 +217,18 @@ document.addEventListener('DOMContentLoaded', () => {
         if (event.key === "r") {
             game.reset();
         }
+    });
+    easyButton = document.getElementById('btn-easy');
+    easyButton.addEventListener('click', () => {
+        game.init(8, 10, 8);
+    });
+    mediumButton = document.getElementById('btn-medium');
+    mediumButton.addEventListener('click', () => {
+        game.init(16, 20, 40);
+    });
+    hardButton = document.getElementById('btn-hard');
+    hardButton.addEventListener('click', () => {
+        game.init(16, 30, 99);
     });
     
 });

@@ -157,10 +157,10 @@ async def auth_callback(request: Request, db: Session = Depends(get_db)):
         db.commit()
         db.refresh(player)
     
-    # Tworzymy odpowiedź z przekierowaniem
-    response = RedirectResponse(url="http://127.0.0.1:3000/frontend/index.html")
+    # Zmieniamy adres z 127.0.0.1 na localhost, żeby ciasteczka działały w tej samej domenie
+    response = RedirectResponse(url="http://localhost:3000/frontend/index.html", status_code=302)
     
-    # Dodajemy informacje o zalogowanym graczu do ciasteczek (cookies)
-    response.set_cookie(key="player_id", value=str(player.id), max_age=3600, httponly=False, samesite="lax")
-    response.set_cookie(key="player_name", value=player.username, max_age=3600, httponly=False, samesite="lax")
+    # Dodajemy parametr path="/", aby ciastko było widoczne na całej stronie frontendowej
+    response.set_cookie(key="player_id", value=str(player.id), max_age=3600, httponly=False, samesite="lax", path="/")
+    response.set_cookie(key="player_name", value=player.username, max_age=3600, httponly=False, samesite="lax", path="/")
     return response

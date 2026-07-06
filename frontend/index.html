@@ -7,6 +7,13 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <div id="top-bar">
+        <div id="auth-section">
+            <a href="http://localhost:8000/auth/google/login" class="btn-google">
+                Zaloguj przez Google
+            </a>
+        </div>
+    </div>
     <h1>Saper</h1>
     <h2 id="game-status"></h2>
     <div id="difficulty-controls">
@@ -20,11 +27,6 @@
     </div>
     <div id="game-board"></div>
     <button id="reset-button">Restart</button>
-    <div id="auth-section">
-        <a href="http://localhost:8000/auth/google/login" class="btn-google">
-            Zaloguj przez Google
-        </a>
-    </div>
     <script src="script.js"></script>
 </body>
 </html>

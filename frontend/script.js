@@ -203,8 +203,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const playerName = getCookie("player_name");
     if (playerName) {
         const authSection = document.getElementById("auth-section");
-        // Zamieniamy przycisk logowania na tekst powitalny
-        authSection.innerHTML = `<span style="font-weight: bold; color: #4285F4; font-size: 1.2rem;">Witaj, ${decodeURIComponent(playerName)}!</span>`;
+        // Zamieniamy przycisk logowania na tekst powitalny ORAZ przycisk wyloguj
+        authSection.innerHTML = `
+            <span style="font-weight: bold; color: #4285F4; font-size: 1.2rem; margin-right: 15px;">Witaj, ${decodeURIComponent(playerName)}!</span>
+            <button id="logout-button" style="background-color: #e57373; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold;">Wyloguj</button>
+        `;
+
+        document.getElementById('logout-button').addEventListener('click', () => {
+            // Usuwamy ciasteczka ustawiając ich datę ważności na przeszłość
+            document.cookie = "player_name=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+            document.cookie = "player_id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+            window.location.reload();
+        });
     }
 
     game = new Game();
